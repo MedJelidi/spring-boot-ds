@@ -31,8 +31,8 @@ public class ClientEntity {
     @Column(unique = true)
     private String telephone;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "client")
+    @JsonIgnore
     private List<TicketEntity> tickets;
 
     public Long getId() {

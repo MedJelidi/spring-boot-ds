@@ -16,11 +16,11 @@ public class MetEntity {
     @Column(nullable = false)
     private float prix;
 
-    @JsonIgnore
     @ManyToMany
-    @JoinTable(name = "toOrder",
+    @JoinTable(name = "orderedWith",
             joinColumns = @JoinColumn(name = "met"),
             inverseJoinColumns = @JoinColumn(name = "ticket"))
+    @JsonIgnore
     private List<TicketEntity> tickets;
 
     public String getNom() {

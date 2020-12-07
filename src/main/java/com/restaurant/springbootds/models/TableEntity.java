@@ -22,8 +22,8 @@ public class TableEntity {
 
     private float supplement;
 
-    @JsonIgnore
     @OneToMany(mappedBy = "table")
+    @JsonIgnore
     private List<TicketEntity> tickets;
 
     public Integer getNumero() {

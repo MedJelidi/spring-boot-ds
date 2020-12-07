@@ -62,7 +62,10 @@ public class TableServiceImpl implements TableService {
         return this.ticketRepository.findAll()
                 .stream()
                 .collect(Collectors.groupingBy(TicketEntity::getTable, Collectors.counting()))
-                .entrySet().stream().max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey).orElse(null);
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 }

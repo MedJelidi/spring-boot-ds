@@ -4,14 +4,15 @@ import com.restaurant.springbootds.models.ClientEntity;
 import com.restaurant.springbootds.models.MetEntity;
 import com.restaurant.springbootds.models.TableEntity;
 import com.restaurant.springbootds.models.TicketEntity;
+import com.restaurant.springbootds.repositories.ClientRepository;
 import com.restaurant.springbootds.repositories.MetRepository;
+import com.restaurant.springbootds.repositories.TableRepository;
 import com.restaurant.springbootds.repositories.TicketRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -19,12 +20,54 @@ public class TicketServiceImpl implements TicketService {
 
     private TicketRepository ticketRepository;
     private MetRepository metRepository;
+    private ClientRepository clientRepository;
+    private TableRepository tableRepository;
 
-    @Override
-    public TicketEntity createTicket(TicketEntity ticket) {
-        TicketEntity newTicket = this.ticketRepository.save(ticket);
-        List<TicketEntity> tickets;
+    public void checkValidation(TicketEntity ticket) {
+        if (ticket.getMets() == null) {
+            throw new NoSuchElementException("No mets provided.");
+        }
+        if (ticket.getTable() == null) {
+            throw new NoSuchElementException("No table provided.");
+        }
+        if (ticket.getClient() == null) {
+            throw new NoSuchElementException("No client provided.");
+        }
+
         for (MetEntity met : ticket.getMets()) {
+            String metNom = met.getNom();
+            if (metNom == null) {
+                throw new NoSuchElementException("Please provide 'nom' attribute for all mets.");
+            }
+            met = metRepository.findById(metNom).orElse(null);
+            if (met == null) {
+                throw new NoSuchElementException("Met named '" + metNom + "' does not exist.");
+            }
+        }
+
+        Integer tableNumber = ticket.getTable().getNumero();
+        if (tableNumber == null) {
+            throw new NoSuchElementException("Please provide 'numero' attribute for the table");
+        }
+        TableEntity table = tableRepository.findById(tableNumber).orElse(null);
+        if (table == null) {
+            throw new NoSuchElementException("Table number '" + tableNumber + "' does not exist.");
+        }
+
+        Long clientID = ticket.getClient().getId();
+        if (clientID == null) {
+            throw new NoSuchElementException("Please provide 'id' attribute for the client.");
+        }
+        ClientEntity client = clientRepository.findById(clientID).orElse(null);
+        if (client == null) {
+            throw new NoSuchElementException("Client with id '" + clientID + "' does not exist.");
+        }
+    }
+
+    private void saveMets(TicketEntity newTicket) {
+        List<TicketEntity> tickets;
+        for (MetEntity met : newTicket.getMets()) {
+            met = metRepository.findById(met.getNom()).orElse(null);
             if (met.getTickets() != null) {
                 tickets = met.getTickets();
             } else {
@@ -34,6 +77,37 @@ public class TicketServiceImpl implements TicketService {
             met.setTickets(tickets);
             this.metRepository.save(met);
         }
+    }
+
+    private void saveTable(TicketEntity newTicket) {
+        TableEntity table = tableRepository.findById(newTicket.getTable().getNumero()).orElse(null);
+        List<TicketEntity> tableTickets = new ArrayList<>();
+        if (table.getTickets() != null) {
+            tableTickets = table.getTickets();
+        }
+        tableTickets.add(newTicket);
+        table.setTickets(tableTickets);
+        this.tableRepository.save(table);
+    }
+
+    private void saveClient(TicketEntity newTicket) {
+        ClientEntity client = clientRepository.findById(newTicket.getClient().getId()).orElse(null);
+        List<TicketEntity> userTickets = new ArrayList<>();
+        if (client.getTickets() != null) {
+            userTickets = client.getTickets();
+        }
+        userTickets.add(newTicket);
+        client.setTickets(userTickets);
+        this.clientRepository.save(client);
+    }
+
+    @Override
+    public TicketEntity createTicket(TicketEntity ticket) {
+        checkValidation(ticket);
+        TicketEntity newTicket = this.ticketRepository.save(ticket);
+        saveClient(newTicket);
+        saveTable(newTicket);
+        saveMets(newTicket);
         return newTicket;
     }
 
@@ -43,30 +117,86 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketEntity updateTicket(int numero, TicketEntity ticket) {
-        Optional<TicketEntity> theTicket = this.ticketRepository.findById(numero);
+    public TicketEntity updateTicket(int numero, TicketEntity newTicket) {
+        Optional<TicketEntity> ticket = this.ticketRepository.findById(numero);
 
-        if (theTicket.isPresent()) {
+        if (ticket.isPresent()) {
+            TicketEntity oldTicket = ticket.get();
+            mergeTicket(oldTicket, newTicket);
 
-            TicketEntity oldTicket = theTicket.get();
-            mergeTicket(oldTicket, ticket);
-
-
-            ClientEntity oldClient = oldTicket.getClient();
-            ClientEntity newClient = ticket.getClient();
-            if (newClient != null)
-                mergeClient(oldClient, newClient);
-
-            TableEntity oldTable = oldTicket.getTable();
-            TableEntity newTable = ticket.getTable();
-            if (newTable != null) {
-                mergeTable(oldTable, newTable);
+            if (newTicket.getClient() != null) {
+                Long clientID = newTicket.getClient().getId();
+                if (clientID == null) {
+                    throw new NoSuchElementException("Please provide 'id' attribute for the client.");
+                }
+                ClientEntity newClient = clientRepository.findById(newTicket.getClient().getId()).orElse(null);
+                if (newClient == null) {
+                    throw new NoSuchElementException("Client with id '" + clientID + "' does not exist.");
+                }
+                oldTicket.setClient(newClient);
+                List<TicketEntity> userTickets = new ArrayList<>();
+                if (newClient.getTickets() != null) {
+                    userTickets = newClient.getTickets();
+                }
+                userTickets.add(newTicket);
+                userTickets.remove(oldTicket);
+                newClient.setTickets(userTickets);
+                this.clientRepository.save(newClient);
             }
 
-            List<MetEntity> oldMets = oldTicket.getMets();
-            List<MetEntity> newMets = ticket.getMets();
-            if (newMets != null) {
-               mergeMets(oldMets, newMets);
+            if (newTicket.getTable() != null) {
+                Integer tableNum = newTicket.getTable().getNumero();
+                if (tableNum == null) {
+                    throw new NoSuchElementException("Please provide 'numero' attribute for the table.");
+                }
+                TableEntity newTable = tableRepository.findById(newTicket.getTable().getNumero()).orElse(null);
+                if (newTable == null) {
+                    throw new NoSuchElementException("Table number '" + tableNum + "' does not exist.");
+                }
+                oldTicket.setTable(newTable);
+                List<TicketEntity> tableTickets = new ArrayList<>();
+                if (newTable.getTickets() != null) {
+                    tableTickets = newTable.getTickets();
+                }
+                tableTickets.add(newTicket);
+                tableTickets.remove(oldTicket);
+                newTable.setTickets(tableTickets);
+                this.tableRepository.save(newTable);
+            }
+
+            if (newTicket.getMets() != null) {
+
+                List<MetEntity> mets = new ArrayList<>();
+                newTicket.getMets().forEach(met -> {
+                    met = metRepository.findById(met.getNom()).orElse(null);
+                    if (met != null) {
+                        mets.add(met);
+                    }
+                });
+                oldTicket.setMets(mets);
+                TicketEntity ti = this.ticketRepository.save(oldTicket);
+
+                saveMets(ti);
+
+
+//                oldTicket.getMets().addAll(newTicket.getMets());
+//                TicketEntity ti = this.ticketRepository.save(oldTicket);
+//                saveMets(ti);
+//                List<MetEntity> newMets = new ArrayList<>();
+//                newTicket.getMets().forEach(met -> {
+//                    met = metRepository.findById(met.getNom()).orElse(null);
+//                    newMets.add(met);
+//                });
+//                oldTicket.setMets(newMets);
+//                TicketEntity tick = ticketRepository.save(oldTicket);
+//
+//                newTicket.getMets().forEach(met -> {
+//                    met = metRepository.findById(met.getNom()).orElse(null);
+//                    if (met.getTickets() != null) {
+//                        met.getTickets().remove(oldTicket);
+//                        metRepository.save(met);
+//                    }
+//                });
             }
 
             return this.ticketRepository.save(oldTicket);

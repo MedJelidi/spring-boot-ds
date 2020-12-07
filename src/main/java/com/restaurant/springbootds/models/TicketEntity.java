@@ -2,6 +2,8 @@ package com.restaurant.springbootds.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -10,6 +12,8 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "Ticket")
+@EqualsAndHashCode(exclude = {"table","client","mets"})
+@ToString(exclude = {"table","client","mets"})
 public class TicketEntity {
 
     @Id
