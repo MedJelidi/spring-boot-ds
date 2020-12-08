@@ -29,6 +29,11 @@ public class TicketController {
         return this.ticketService.readTickets();
     }
 
+    @GetMapping("/{numero}")
+    public TicketEntity getTicketByNumero(@PathVariable("numero") int numero) {
+        return this.ticketService.getTicketByNum(numero);
+    }
+
     @PutMapping("/{numero}")
     public TicketEntity updateTicket(@PathVariable("numero") int numero, @RequestBody TicketEntity ticket) {
         return this.ticketService.updateTicket(numero, ticket);

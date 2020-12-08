@@ -26,6 +26,15 @@ public class MetServiceImpl implements MetService {
     }
 
     @Override
+    public MetEntity getMetByNom(String nom) {
+        MetEntity met = this.metRepository.findById(nom).orElse(null);
+        if (met != null) {
+            return met;
+        }
+        throw new NoSuchElementException("Met named '" + nom + "' does not exist.");
+    }
+
+    @Override
     public MetEntity updateMet(String nom, MetEntity met) {
         Optional<MetEntity> theMet = this.metRepository.findById(nom);
         if (theMet.isPresent()) {

@@ -27,6 +27,9 @@ public class MetController {
         return this.metService.readMets();
     }
 
+    @GetMapping("/{nom}")
+    public MetEntity getMetByNom(@PathVariable("nom") String nom) {return this.metService.getMetByNom(nom);}
+
     @PutMapping("/{nom}")
     public MetEntity updateMet(@PathVariable("nom") String nom, @RequestBody MetEntity met) {
         return this.metService.updateMet(nom, met);

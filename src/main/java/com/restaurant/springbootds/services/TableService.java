@@ -7,6 +7,7 @@ import java.util.List;
 public interface TableService {
     TableEntity createTable(TableEntity table);
     List<TableEntity> readTables();
+    TableEntity getTableByNum(int numero);
     TableEntity updateTable(int numero, TableEntity table);
     TableEntity deleteTable(int numero);
     TableEntity mostBookedTable();

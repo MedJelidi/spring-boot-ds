@@ -10,6 +10,8 @@ public interface ClientService {
 
     List<ClientEntity> readClients();
 
+    ClientEntity getClientByID(Long id);
+
     ClientEntity updateClient(Long id, ClientEntity client);
 
     ClientEntity deleteClient(Long id);

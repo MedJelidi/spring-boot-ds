@@ -31,6 +31,9 @@ public class ClientController {
         return this.clientService.readClients();
     }
 
+    @GetMapping("/{id}")
+    public ClientEntity getClientByID(@PathVariable("id") Long id) {return this.clientService.getClientByID(id);}
+
     @PutMapping("/{id}")
     public ClientEntity updateClient(@PathVariable("id") Long id, @RequestBody ClientEntity client) {
         return this.clientService.updateClient(id, client);

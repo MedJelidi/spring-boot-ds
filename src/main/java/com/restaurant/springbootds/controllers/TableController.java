@@ -27,6 +27,9 @@ public class TableController {
         return this.tableService.readTables();
     }
 
+    @GetMapping("/{numero}")
+    public TableEntity getTableByNum(@PathVariable("numero") int numero) {return this.tableService.getTableByNum(numero);}
+
     @PutMapping("/{numero}")
     public TableEntity updateTable(@PathVariable("numero") int numero, @RequestBody TableEntity table) {
         return this.tableService.updateTable(numero, table);

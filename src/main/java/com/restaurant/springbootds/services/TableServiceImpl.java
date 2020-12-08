@@ -31,6 +31,15 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    public TableEntity getTableByNum(int numero) {
+        TableEntity table = this.tableRepository.findById(numero).orElse(null);
+        if (table != null) {
+            return table;
+        }
+        throw new NoSuchElementException("Table number '" + numero + "' does not exist.");
+    }
+
+    @Override
     public TableEntity updateTable(int numero, TableEntity table) {
         Optional<TableEntity> theTable = this.tableRepository.findById(numero);
         if (theTable.isPresent()) {
