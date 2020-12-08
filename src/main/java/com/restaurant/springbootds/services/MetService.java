@@ -2,6 +2,7 @@ package com.restaurant.springbootds.services;
 
 import com.restaurant.springbootds.models.MetEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface MetService {
@@ -10,4 +11,5 @@ public interface MetService {
     MetEntity getMetByNom(String nom);
     MetEntity updateMet(String nom, MetEntity met);
     MetEntity deleteMet(String met);
+    String mostBookedPlatInPeriod(LocalDate beginDate, LocalDate endDate);
 }

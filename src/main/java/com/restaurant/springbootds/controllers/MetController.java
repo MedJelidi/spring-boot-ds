@@ -3,11 +3,14 @@ package com.restaurant.springbootds.controllers;
 import com.restaurant.springbootds.models.MetEntity;
 import com.restaurant.springbootds.services.MetService;
 import lombok.AllArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -38,6 +41,12 @@ public class MetController {
     @DeleteMapping("/{numero}")
     public MetEntity deleteMet(@PathVariable("nom") String nom) {
         return this.metService.deleteMet(nom);
+    }
+
+    @GetMapping("mostBookedPlatInPeriod/{beginDate}/{endDate}")
+    public String mostBookedPlatInPeriod(@PathVariable("beginDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beginDate,
+                                                       @PathVariable("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return this.metService.mostBookedPlatInPeriod(beginDate, endDate);
     }
 
     @ExceptionHandler(NoSuchElementException.class)

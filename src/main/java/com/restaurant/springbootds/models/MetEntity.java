@@ -16,6 +16,9 @@ public class MetEntity {
     @Column(nullable = false)
     private float prix;
 
+    @Enumerated(EnumType.STRING)
+    private Type type;
+
     @ManyToMany
     @JoinTable(name = "orderedWith",
             joinColumns = @JoinColumn(name = "met"),
@@ -45,5 +48,13 @@ public class MetEntity {
 
     public void setTickets(List<TicketEntity> tickets) {
         this.tickets = tickets;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
     }
 }

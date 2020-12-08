@@ -75,26 +75,14 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public ClientEntity mostLoyalClient() {
-        List<TicketEntity> tickets = this.ticketRepository.findAll();
-//        Map<Long, Integer> clientScore = new HashMap<Long, Integer>();
-//        for (TicketEntity ticket : tickets) {
-//            if (ticket.getClient() != null) {
-//                if (clientScore.containsKey(ticket.getClient().getId()))
-//                    clientScore.replace(ticket.getClient().getId(), clientScore.get(ticket.getClient().getId()), clientScore.get(ticket.getClient().getId()) + 1);
-//                else
-//                    clientScore.put(ticket.getClient().getId(), 1);
-//            }
-//        }
-//        Long clientID = Collections.max(clientScore.entrySet(), Map.Entry.comparingByValue()).getKey();
-//
-//        return this.clientRepository.findById(clientID).orElse(null);
-        return tickets.stream()
-                // summarize Clients
+        return this.ticketRepository.findAll()
+                .stream()
                 .collect(Collectors.groupingBy(TicketEntity::getClient, Collectors.counting()))
-                // fetch the max entry
-                .entrySet().stream().max(Map.Entry.comparingByValue())
-                // map to Client
-                .map(Map.Entry::getKey).orElse(null);
+                .entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 
     @Override
@@ -107,6 +95,7 @@ public class ClientServiceImpl implements ClientService {
                 .entrySet()
                 .stream()
                 .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey).orElse(null);
+                .map(Map.Entry::getKey)
+                .orElse(null);
     }
 }
