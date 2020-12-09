@@ -12,7 +12,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -152,9 +154,6 @@ public class TicketServiceImpl implements TicketService {
 
         if (ticket.isPresent()) {
             TicketEntity oldTicket = ticket.get();
-            TicketEntity theTicket = ticketRepository.findById(numero).orElse(null);
-            System.out.println(newTicket);
-            System.out.println(theTicket);
 
             // Merges ticket data
             mergeTicket(oldTicket, newTicket);
@@ -163,7 +162,7 @@ public class TicketServiceImpl implements TicketService {
             if (newTicket.getClient() != null) {
                 verifyClient(newTicket);
                 ClientEntity newClient = clientRepository.findById(newTicket.getClient().getId()).orElse(null);
-                ClientEntity oldClient = clientRepository.findById(theTicket.getClient().getId()).orElse(null);
+                ClientEntity oldClient = clientRepository.findById(oldTicket.getClient().getId()).orElse(null);
                 oldTicket.setClient(newClient);
                 List<TicketEntity> userTickets = new ArrayList<>();
                 if (newClient.getTickets() != null) {
@@ -186,7 +185,7 @@ public class TicketServiceImpl implements TicketService {
             if (newTicket.getTable() != null) {
                 verifyTable(newTicket);
                 TableEntity newTable = tableRepository.findById(newTicket.getTable().getNumero()).orElse(null);
-                TableEntity oldTable = tableRepository.findById(theTicket.getTable().getNumero()).orElse(null);
+                TableEntity oldTable = tableRepository.findById(oldTicket.getTable().getNumero()).orElse(null);
                 oldTicket.setTable(newTable);
                 List<TicketEntity> tableTickets = new ArrayList<>();
                 if (newTable.getTickets() != null) {
@@ -263,6 +262,41 @@ public class TicketServiceImpl implements TicketService {
                 .filter(t -> t.getDate().isAfter(beginDate) && t.getDate().isBefore(endDate))
                 .map(TicketEntity::getAddition)
                 .reduce((float) 0, Float::sum);
+    }
+
+    @Override
+    public Map<String, String> dayWeekMonthRevenue() {
+
+        float sumAddition = this.ticketRepository.findAll()
+                .stream()
+                .map(TicketEntity::getAddition)
+                .reduce((float) 0, Float::sum);
+
+        LocalDate beginDate = this.ticketRepository.findAll()
+                .stream()
+                .map(TicketEntity::getDate)
+                .collect(Collectors.toList())
+                .stream()
+                .min(LocalDate::compareTo).get();
+
+        LocalDate endDate = this.ticketRepository.findAll()
+                .stream()
+                .map(TicketEntity::getDate)
+                .collect(Collectors.toList())
+                .stream()
+                .max(LocalDate::compareTo).get();
+
+        long days = ChronoUnit.DAYS.between(beginDate, endDate);
+        long weeks = ChronoUnit.WEEKS.between(beginDate, endDate);
+        long months = ChronoUnit.MONTHS.between(beginDate, endDate);
+
+        Map<String, String> revenues = new HashMap<>();
+
+        revenues.put("revenuePerDay", days == 0 ? "UNAVAILABLE" : String.valueOf(sumAddition / days));
+        revenues.put("revenuePerWeek", weeks == 0 ? "UNAVAILABLE" : String.valueOf(sumAddition / weeks));
+        revenues.put("revenuePerMonth", months == 0 ? "UNAVAILABLE" : String.valueOf(sumAddition / months));
+
+        return revenues;
     }
 
 }

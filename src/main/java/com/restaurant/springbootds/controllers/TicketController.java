@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -48,6 +49,11 @@ public class TicketController {
     public float periodRevenue(@PathVariable("beginDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate beginDate,
                                @PathVariable("endDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return this.ticketService.periodRevenue(beginDate, endDate);
+    }
+
+    @GetMapping("/dayMonthYearRevenue")
+    Map<String, String> dayWeekMonthRevenue() {
+        return this.ticketService.dayWeekMonthRevenue();
     }
 
     @ExceptionHandler(NoSuchElementException.class)
