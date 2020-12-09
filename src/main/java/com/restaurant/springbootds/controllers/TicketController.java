@@ -51,7 +51,7 @@ public class TicketController {
         return this.ticketService.periodRevenue(beginDate, endDate);
     }
 
-    @GetMapping("/dayMonthYearRevenue")
+    @GetMapping("/dayWeekMonthRevenue")
     Map<String, String> dayWeekMonthRevenue() {
         return this.ticketService.dayWeekMonthRevenue();
     }
