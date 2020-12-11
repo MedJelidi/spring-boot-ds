@@ -26,11 +26,12 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
         web.ignoring().antMatchers("/api/user");
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/**").permitAll().anyRequest().authenticated().and().csrf().disable();
-        // http.logout();
-    }
+//    uncomment this section to disable security
+//
+//    @Override
+//    protected void configure(HttpSecurity http) throws Exception {
+//        http.authorizeRequests().antMatchers("/**").permitAll().anyRequest().authenticated().and().csrf().disable();
+//    }
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
