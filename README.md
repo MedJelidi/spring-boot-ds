@@ -30,7 +30,7 @@ Ticket API
 ```
 
 ## Question 2
-src/main/resources/restaurant.sql
+src/main/resources/restaurant.sql (used for tests)
 
 ## Question 3
 a) Pour une période donnée quel est le plat le plus acheté ?

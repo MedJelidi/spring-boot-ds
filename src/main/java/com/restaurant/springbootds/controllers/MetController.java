@@ -37,7 +37,7 @@ public class MetController {
         return this.metService.updateMet(nom, met);
     }
 
-    @DeleteMapping("/{numero}")
+    @DeleteMapping("/{nom}")
     public MetEntity deleteMet(@PathVariable("nom") String nom) {
         return this.metService.deleteMet(nom);
     }

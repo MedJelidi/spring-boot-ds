@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,7 +39,7 @@ public class TicketServiceImpl implements TicketService {
 
         verifyMets(ticket);
 
-        verifyTable(ticket);
+        verifyTable(ticket, ticket.getNbCouvert());
 
         verifyClient(ticket);
     }
@@ -54,15 +55,22 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    private void verifyTable(TicketEntity newTicket) {
+    private void verifyTable(TicketEntity newTicket, int nbCouvert) {
         Integer tableNum = newTicket.getTable().getNumero();
-        if (tableNum == null) {
+        if (tableNum == null)
             throw new NoSuchElementException("Please provide 'numero' attribute for the table.");
-        }
+
         TableEntity newTable = tableRepository.findById(tableNum).orElse(null);
-        if (newTable == null) {
+        if (newTable == null)
             throw new NoSuchElementException("Table number '" + tableNum + "' does not exist.");
-        }
+
+        System.out.println(newTable);
+        int tableAvailableCouvert = newTable.getTickets()
+                .stream()
+                .map(TicketEntity::getNbCouvert)
+                .reduce(0, Integer::sum);
+        if (tableAvailableCouvert + nbCouvert > newTable.getNbCouvert())
+            throw new NoSuchElementException("No places left on the table.");
     }
 
     private void verifyMets(TicketEntity newTicket) {
@@ -116,17 +124,36 @@ public class TicketServiceImpl implements TicketService {
     }
 
     public void mergeTicket(TicketEntity oldTicket, TicketEntity newTicket) {
-        if (newTicket.getAddition() != 0)
-            oldTicket.setAddition(newTicket.getAddition());
         if (newTicket.getDate() != null)
             oldTicket.setDate(newTicket.getDate());
-        if (newTicket.getNbCouvert() != null)
+        if (newTicket.getNbCouvert() != null) {
+            TableEntity table = tableRepository.findById(oldTicket.getTable().getNumero()).orElse(null);
+            int tableAvailableCouvert = table.getTickets()
+                    .stream()
+                    .map(TicketEntity::getNbCouvert)
+                    .reduce(0, Integer::sum);
+            if (tableAvailableCouvert - oldTicket.getNbCouvert() + newTicket.getNbCouvert() > table.getNbCouvert())
+                throw new NoSuchElementException("NbCouvert surpasses maximum number.");
             oldTicket.setNbCouvert(newTicket.getNbCouvert());
+        }
+    }
+
+    private float calculateAddition(TicketEntity ticket) {
+        TableEntity newTable = tableRepository.findById(ticket.getTable().getNumero()).orElse(null);
+        return ticket.getMets()
+                .stream()
+                .map(m -> {
+                    MetEntity met = metRepository.findById(m.getNom()).orElse(null);
+                    return met.getPrix();
+                })
+                .reduce((float) 0, Float::sum)
+                + newTable.getSupplement();
     }
 
     @Override
     public TicketEntity createTicket(TicketEntity ticket) {
         checkValidation(ticket);
+        ticket.setAddition(calculateAddition(ticket));
         TicketEntity newTicket = this.ticketRepository.save(ticket);
         saveClient(newTicket);
         saveTable(newTicket);
@@ -183,10 +210,12 @@ public class TicketServiceImpl implements TicketService {
 
             // Updates Table if provided and valid
             if (newTicket.getTable() != null) {
-                verifyTable(newTicket);
+                int nbCouvert = newTicket.getNbCouvert() != null ? newTicket.getNbCouvert() : oldTicket.getNbCouvert();
+                verifyTable(newTicket, nbCouvert);
                 TableEntity newTable = tableRepository.findById(newTicket.getTable().getNumero()).orElse(null);
                 TableEntity oldTable = tableRepository.findById(oldTicket.getTable().getNumero()).orElse(null);
                 oldTicket.setTable(newTable);
+                oldTicket.setAddition(oldTicket.getAddition() - oldTable.getSupplement() + newTable.getSupplement());
                 List<TicketEntity> tableTickets = new ArrayList<>();
                 if (newTable.getTickets() != null) {
                     tableTickets = newTable.getTickets();
@@ -220,13 +249,17 @@ public class TicketServiceImpl implements TicketService {
                 });
                 oldTicket.getMets().clear();
 
+                AtomicReference<Float> newAddition = new AtomicReference<>((float) 0);
                 List<MetEntity> newMets = new ArrayList<>();
                 newTicket.getMets().forEach(m -> {
                     MetEntity met = metRepository.findById(m.getNom()).orElse(null);
                     newMets.add(met);
+                    newAddition.updateAndGet(v -> v + met.getPrix());
                 });
 
                 oldTicket.setMets(newMets);
+                TableEntity tableEntity = tableRepository.findById(oldTicket.getTable().getNumero()).orElse(null);
+                oldTicket.setAddition(newAddition.get() + tableEntity.getSupplement());
 
                 newMets.forEach(m -> {
                     List<TicketEntity> metTickets = new ArrayList<>();
@@ -249,6 +282,7 @@ public class TicketServiceImpl implements TicketService {
         Optional<TicketEntity> theTicket = this.ticketRepository.findById(numero);
         if (theTicket.isPresent()) {
             TicketEntity ticket = theTicket.get();
+
             this.ticketRepository.deleteById(numero);
             return ticket;
         }

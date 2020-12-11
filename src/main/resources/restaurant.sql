@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS `met`;
 CREATE TABLE `met` (
   `nom` varchar(255) NOT NULL,
   `prix` float NOT NULL,
-  `type` varchar(255) DEFAULT NULL,
+  `type` varchar(255) NOT NULL,
   PRIMARY KEY (`nom`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

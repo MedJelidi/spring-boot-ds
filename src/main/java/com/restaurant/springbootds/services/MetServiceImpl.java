@@ -1,8 +1,6 @@
 package com.restaurant.springbootds.services;
 
-import com.restaurant.springbootds.models.MetEntity;
-import com.restaurant.springbootds.models.TicketEntity;
-import com.restaurant.springbootds.models.Type;
+import com.restaurant.springbootds.models.*;
 import com.restaurant.springbootds.repositories.MetRepository;
 import com.restaurant.springbootds.repositories.TicketRepository;
 import lombok.AllArgsConstructor;
@@ -48,8 +46,6 @@ public class MetServiceImpl implements MetService {
                 oldMet.setNom(met.getNom());
             if (met.getPrix() != 0)
                 oldMet.setPrix(met.getPrix());
-            if (met.getType() != null)
-                oldMet.setType(met.getType());
             return this.metRepository.save(oldMet);
         }
         throw new NoSuchElementException("Met does not exist.");
@@ -70,7 +66,7 @@ public class MetServiceImpl implements MetService {
     public String mostBookedPlatInPeriod(LocalDate beginDate, LocalDate endDate) {
         List<MetEntity> mets = this.metRepository.findAll()
                 .stream()
-                .filter(m -> m.getType() == Type.Plat)
+                .filter(m -> m.getType().equals("plat"))
                 .collect(Collectors.toList());
 
         Map<String, Long> map = new HashMap<>();

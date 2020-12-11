@@ -9,6 +9,9 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "Met")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name="type",
+        discriminatorType = DiscriminatorType.STRING)
 public class MetEntity {
     @Id
     private String nom;
@@ -16,15 +19,22 @@ public class MetEntity {
     @Column(nullable = false)
     private float prix;
 
-    @Enumerated(EnumType.STRING)
-    private Type type;
-
     @ManyToMany
     @JoinTable(name = "orderedWith",
             joinColumns = @JoinColumn(name = "met"),
             inverseJoinColumns = @JoinColumn(name = "ticket"))
     @JsonIgnore
     private List<TicketEntity> tickets;
+
+    @Column(insertable = false, updatable = false)
+    private String type;
+
+    public MetEntity(String nom, float prix) {
+        this.nom = nom;
+        this.prix = prix;
+    }
+
+    public MetEntity() {}
 
     public String getNom() {
         return nom;
@@ -50,11 +60,11 @@ public class MetEntity {
         this.tickets = tickets;
     }
 
-    public Type getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(String type) {
         this.type = type;
     }
 }
