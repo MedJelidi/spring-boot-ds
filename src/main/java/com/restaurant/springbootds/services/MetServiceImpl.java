@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +19,21 @@ public class MetServiceImpl implements MetService {
 
     @Override
     public MetEntity createMet(MetEntity met) {
+        if (met.getType() == null)
+            throw new NoSuchElementException("Please add a type field (should be 'entree', 'plat' or 'dessert').");
+        switch (met.getType()) {
+            case "entree":
+                met = new Entree(met.getNom(), met.getPrix());
+                break;
+            case "plat":
+                met = new Plat(met.getNom(), met.getPrix());
+                break;
+            case "dessert":
+                met = new Dessert(met.getNom(), met.getPrix());
+                break;
+            default:
+                throw new NoSuchElementException("Type should be 'entree', 'plat' or 'dessert'.");
+        }
         return this.metRepository.save(met);
     }
 
